@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option java_package = "me.hiawui.hiassist.calendar";
+option java_multiple_files = true;
+
+message CalendarSettings {
+  int32 alarm_service_state = 1;
+  repeated AlarmInfo alarms = 2;
+  map<int32, HolidaysInYear> holidays = 3;
+}
+
+enum AlarmType {
+  ALARM_ONE_TIME = 0;
+  ALARM_WORK_DAY = 1;
+  ALARM_EVERY_DAY = 2;
+  ALARM_EVERY_WEEK = 3;
+  ALARM_EVERY_MONTH = 4;
+  ALARM_EVERY_YEAR = 5;
+}
+
+message AlarmInfo {
+  int64 id = 1;
+  bool disabled = 2;
+  AlarmType type = 3;
+  optional string title = 4;
+  int32 trigger_time = 5;
+  optional int64 trigger_day = 6;
+  optional int32 trigger_weekday = 7;
+  optional int32 trigger_month_day = 8;
+  optional int32 trigger_month = 9;
+}
+
+message HolidayInfo {
+  bool holiday = 1;
+  string name = 2;
+  int32 wage = 3;
+  string date = 4;
+}
+
+message HolidaysInYear {
+  int64 nextRefreshTime = 1;
+  map<string, HolidayInfo> holidays = 2;
+}

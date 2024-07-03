@@ -1,0 +1,48 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Hiassist</string>
+
+    <string name="calendar_year">年</string>
+    <string name="calendar_today">今天</string>
+    <string name="calendar_cancel">取消</string>
+    <string name="calendar_invalid_year">年份超出范围 [%d ~ %d]</string>
+    <string name="calendar_time_lucky">时辰凶吉 %s</string>
+
+    <string name="floating_window_permission">打开浮窗权限</string>
+
+    <string name="alarm_channel_id">闹钟通知</string>
+    <string name="alarm_channel_name">闹钟通知</string>
+    <string name="alarm_channel_desc">用于闹钟的通知</string>
+    <string name="dismiss_alarm">停止</string>
+    <string name="alarm_notification_title">闹钟</string>
+    <string name="alarm_notification_content">闹钟: %1$s</string>
+
+    <string name="alarm_type_one_time">一次</string>
+    <string name="alarm_type_work_day">工作日</string>
+    <string name="alarm_type_every_day">每天</string>
+    <string name="alarm_type_every_week">每周</string>
+    <string name="alarm_type_every_month">每月</string>
+    <string name="alarm_type_every_year">每年</string>
+
+    <string name="alarm_remove">删除闹钟</string>
+    <string name="alarm_add">添加闹钟</string>
+    <string name="alarm_specified_day">%1$s，周%2$s</string>
+    <string name="alarm_every_week">%s</string>
+    <string name="alarm_every_month">%d号</string>
+    <string name="alarm_every_year">%d月%d号</string>
+    <string name="alarm_monday">一</string>
+    <string name="alarm_tuesday">二</string>
+    <string name="alarm_wednesday">三</string>
+    <string name="alarm_thursday">四</string>
+    <string name="alarm_friday">五</string>
+    <string name="alarm_saturday">六</string>
+    <string name="alarm_sunday">日</string>
+    <string name="alarm_title">标题</string>
+
+    <string name="m3c_time_picker_hour" tools:override="true">时</string>
+    <string name="m3c_time_picker_minute" tools:override="true">分</string>
+
+    <string name="do_cancel">取消</string>
+    <string name="do_remove">删除</string>
+    <string name="do_save">保存</string>
+    <string name="alarm_remove_confirm">删除闹钟?</string>
+</resources>
