@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.Flow
 import me.hiawui.hiassist.calendar.alarm.removeSystemAlarm
 import me.hiawui.hiassist.calendar.alarm.setSystemAlarm
+import me.hiawui.hiassist.calendar.astrology.WesternAstrologyTools
 import me.hiawui.hiassist.calendar.lunar.LunarTools
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -52,6 +53,10 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
 
     fun getSelectedDate8Chars(): LunarTools.EightChars {
         return LunarTools.get8Chars(selectedDate.value.atTime(0, 0, 0))
+    }
+
+    fun getClashChineseZodiac(eightChars: LunarTools.EightChars): LunarTools.ChineseZodiac {
+        return LunarTools.getClashChineseZodiac(eightChars.dayZodiac.index)
     }
 
     fun getSelectedDateTimeLuckyList(): List<LunarTools.TimeLuckyInfo> {
@@ -129,10 +134,19 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
 
     fun getSolarTermInfo(date: LocalDate): String {
         val solarTerms = LunarTools.getSolarTermsDateList(date.year)
-        val currTerm = solarTerms.findLast { it.date <= date }
+        var currTerm = solarTerms.findLast { it.date <= date }
+        if (currTerm == null) {
+            // 找去年的冬至
+            val solarTermLastYear = LunarTools.getSolarTermsDateList(date.year - 1)
+            currTerm = solarTermLastYear.lastOrNull()
+        }
         if (currTerm == null) {
             return ""
         }
         return "${currTerm.name} 第 ${ChronoUnit.DAYS.between(currTerm.date, date) + 1} 天"
+    }
+
+    fun getWesternZodiac(date: LocalDate): String {
+        return WesternAstrologyTools.getWesternZodiacInfo(date).name
     }
 }

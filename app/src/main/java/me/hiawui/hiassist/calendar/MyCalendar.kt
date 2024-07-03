@@ -211,7 +211,7 @@ fun DateInfo() {
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "公历 ${selectedDate.year}年${selectedDate.month.value}月${selectedDate.dayOfMonth}日"
+            text = "公历 ${selectedDate.year}年${selectedDate.month.value}月${selectedDate.dayOfMonth}日 ${viewModel.getWesternZodiac(selectedDate)}"
         )
     }
     Row(
@@ -230,8 +230,10 @@ fun DateInfo() {
             .padding(vertical = 5.dp),
         horizontalArrangement = Arrangement.Center
     ) {
+        val clashed = viewModel.getClashChineseZodiac(eightChars)
         Text(
-            text = "${eightChars.year.name}(${eightChars.zodiac.name})年 ${eightChars.month.name}月 ${eightChars.day.name}日",
+            text = "${eightChars.year.name}(${eightChars.yearZodiac.name})年 ${eightChars.month.name}月 ${eightChars.day.name}日 " +
+                    "${eightChars.dayZodiac.name}冲${clashed.name}",
         )
     }
     Row(

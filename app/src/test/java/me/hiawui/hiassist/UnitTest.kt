@@ -7,6 +7,8 @@ import kotlinx.coroutines.runBlocking
 import me.hiawui.hiassist.calendar.CalendarSettings
 import me.hiawui.hiassist.calendar.HolidayDataStore
 import me.hiawui.hiassist.calendar.alarm.AlarmInfoBuilder
+import me.hiawui.hiassist.calendar.astrology.WesternAstrologyTools.WesternZodiacInfo
+import me.hiawui.hiassist.calendar.astrology.WesternAstrologyTools.getWesternZodiacInfo
 import me.hiawui.hiassist.calendar.lunar.LunarTools.LunarDateInfo
 import me.hiawui.hiassist.calendar.lunar.LunarTools.LunarMonthInfo
 import me.hiawui.hiassist.calendar.lunar.LunarTools.get8Chars
@@ -102,6 +104,10 @@ class UnitTest {
     @Test
     fun solarTerms() {
         assertEquals(
+            getSolarTermsDateList(1900).map { it.date.dayOfMonth }.joinToString(","),
+            "6,20,4,19,6,21,5,20,6,21,6,22,7,23,8,23,8,23,9,24,8,23,7,22"
+        )
+        assertEquals(
             getSolarTermsDateList(1901).map { it.date.dayOfMonth }.joinToString(","),
             "6,21,4,19,6,21,5,21,6,22,6,22,8,23,8,24,8,24,9,24,8,23,8,22"
         )
@@ -120,7 +126,7 @@ class UnitTest {
         assertEquals(
             get8Chars(LocalDateTime.of(2023, 2, 3, 0, 0)).let {
                 "${it.year.name},${it.month.name},${it.day.name},${it.time.name}" +
-                        ",${it.zodiac.name}-${it.zodiac.tradName}"
+                        ",${it.yearZodiac.name}-${it.yearZodiac.tradName}"
             },
             "壬寅,癸丑,壬辰,庚子,兔-虎"
         )
@@ -129,7 +135,7 @@ class UnitTest {
                 LocalDateTime.of(2023, 2, 4, 0, 0)
             ).let {
                 "${it.year.name},${it.month.name},${it.day.name},${it.time.name}" +
-                        ",${it.zodiac.name}-${it.zodiac.tradName}"
+                        ",${it.yearZodiac.name}-${it.yearZodiac.tradName}"
             },
             "癸卯,甲寅,癸巳,壬子,兔-兔"
         )
@@ -138,7 +144,7 @@ class UnitTest {
                 LocalDateTime.of(2024, 1, 6, 0, 0)
             ).let {
                 "${it.year.name},${it.month.name},${it.day.name},${it.time.name}" +
-                        ",${it.zodiac.name}-${it.zodiac.tradName}"
+                        ",${it.yearZodiac.name}-${it.yearZodiac.tradName}"
             },
             "癸卯,乙丑,己巳,甲子,兔-兔"
         )
@@ -147,7 +153,7 @@ class UnitTest {
                 LocalDateTime.of(2024, 2, 9, 1, 0)
             ).let {
                 "${it.year.name},${it.month.name},${it.day.name},${it.time.name}" +
-                        ",${it.zodiac.name}-${it.zodiac.tradName}"
+                        ",${it.yearZodiac.name}-${it.yearZodiac.tradName}"
             },
             "甲辰,丙寅,癸卯,癸丑,兔-龙"
         )
@@ -167,5 +173,21 @@ class UnitTest {
         assertEquals(getTimeLuckyList(LocalDate.of(2024, 7, 21)).joinToString("") {
             "${it.time.name}${it.luckyName}"
         }, "戊子凶己丑凶庚寅吉辛卯凶壬辰吉癸巳吉甲午凶乙未凶丙申吉丁酉吉戊戌凶己亥吉庚子凶")
+    }
+
+    @Test
+    fun westZodiac() {
+        assertEquals(
+            getWesternZodiacInfo(LocalDate.of(2024, 1, 1)),
+            WesternZodiacInfo("摩羯座", LocalDate.of(2023, 12, 22))
+        )
+        assertEquals(
+            getWesternZodiacInfo(LocalDate.of(2024, 7, 22)),
+            WesternZodiacInfo("巨蟹座", LocalDate.of(2024, 6, 22))
+        )
+        assertEquals(
+            getWesternZodiacInfo(LocalDate.of(2024, 12, 31)),
+            WesternZodiacInfo("摩羯座", LocalDate.of(2024, 12, 22))
+        )
     }
 }

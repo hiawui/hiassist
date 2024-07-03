@@ -9,7 +9,6 @@ import kotlin.math.abs
 object LunarTools {
     private const val LUNAR_MONTH_START_YEAR = 1900
     private const val LUNAR_NEW_YEAR_START_YEAR = 1900
-    private const val MAX_YEAR = 2100
 
     private const val LEAP_MONTH_BIT = 13
     private const val LEAP_MONTH_DAYS_BIT = 12
@@ -99,7 +98,7 @@ object LunarTools {
         0x52, 0x47, 0x3b, 0x4f, 0x45, 0x39, 0x4c, 0x41, 0x35, 0x49,  // 2091 ~ 2100
     )
 
-    private const val SOLAR_TERMS_START_YEAR = 1901
+    private const val SOLAR_TERMS_START_YEAR = 1900
     private val solarTermsNameList =
         listOf(
             "小寒", "大寒", "立春", "雨水", "惊蛰", "春分", "清明", "谷雨", "立夏", "小满", "芒种", "夏至",
@@ -116,6 +115,7 @@ object LunarTools {
     // 节气所在天（减去节气最小数）
     // 1901-2100年香港天文台公布二十四节气按年存储16进制，1个16进制为4个2进制
     private val solarTermsDataList = listOf(
+        0x5AA665A65A56, // 1900
         0x6aaaa6aa9a5a, 0xaaaaaabaaa6a, 0xaaabbabbafaa, 0x5aa665a65aab, 0x6aaaa6aa9a5a, // 1901 ~ 1905
         0xaaaaaaaaaa6a, 0xaaabbabbafaa, 0x5aa665a65aab, 0x6aaaa6aa9a5a, 0xaaaaaaaaaa6a,
         0xaaabbabbafaa, 0x5aa665a65aab, 0x6aaaa6aa9a56, 0xaaaaaaaa9a5a, 0xaaabaabaaeaa,
@@ -290,7 +290,8 @@ object LunarTools {
         val month: StemBranch,
         val day: StemBranch,
         val time: StemBranch,
-        val zodiac: ChineseZodiac,
+        val yearZodiac: ChineseZodiac,
+        val dayZodiac: ChineseZodiac,
     )
 
     // 八字
@@ -343,8 +344,14 @@ object LunarTools {
             mthStemBranch,
             dayStemBranch,
             timeStemBranch,
-            ChineseZodiac(zodiacIdx, tradZodiacIdx)
+            ChineseZodiac(zodiacIdx, tradZodiacIdx),
+            ChineseZodiac(dayBranchIdx, dayBranchIdx),
         )
+    }
+
+    fun getClashChineseZodiac(zodiacIdx: Int): ChineseZodiac {
+        val clashIdx = (zodiacIdx + 6) % 12
+        return ChineseZodiac(clashIdx, clashIdx)
     }
 
     data class TimeLuckyInfo(val time: StemBranch, val isGood: Boolean) {
