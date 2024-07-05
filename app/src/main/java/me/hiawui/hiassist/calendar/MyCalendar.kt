@@ -51,7 +51,6 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,6 +77,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.compose.HorizontalCalendar
@@ -203,7 +203,8 @@ fun DateInfo() {
     val lunarInfo = LunarTools.getLunarDateInfo(selectedDate)
     val eightChars = viewModel.getSelectedDate8Chars()
     val luckyInfo = viewModel.getSelectedDateTimeLuckyList()
-    val holidayInfo by viewModel.getHolidayInfo(selectedDate).collectAsState(initial = null)
+    val holidayInfo by viewModel.getHolidayInfo(selectedDate)
+        .collectAsStateWithLifecycle(initialValue = null)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -553,7 +554,8 @@ fun AlarmEdit(modifier: Modifier) {
 fun AlarmList(modifier: Modifier, isResumed: Boolean) {
     val viewModel = viewModel<CalendarViewModel>()
     val alarmListState =
-        viewModel.getAlarms().collectAsState(initial = CalendarSettings.getDefaultInstance())
+        viewModel.getAlarms()
+            .collectAsStateWithLifecycle(initialValue = CalendarSettings.getDefaultInstance())
     val scope = rememberCoroutineScope()
 
     Box(
@@ -901,7 +903,8 @@ fun BodyView(modifier: Modifier, state: CalendarState) {
         modifier = modifier,
         state = state,
         dayContent = { day ->
-            val holidayInfo by viewModel.getHolidayInfo(day.date).collectAsState(initial = null)
+            val holidayInfo by viewModel.getHolidayInfo(day.date)
+                .collectAsStateWithLifecycle(initialValue = null)
             val isHoliday = holidayInfo?.holiday ?: false
             val isMakeupDay = holidayInfo?.holiday == false
             DayView(
