@@ -52,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -97,6 +98,7 @@ import me.hiawui.hiassist.calendar.alarm.getDisplayTime
 import me.hiawui.hiassist.calendar.alarm.getNextAlarmTime
 import me.hiawui.hiassist.calendar.alarm.rememberAlarmInfoState
 import me.hiawui.hiassist.calendar.lunar.LunarTools
+import me.hiawui.hiassist.logI
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -212,7 +214,11 @@ fun DateInfo() {
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "公历 ${selectedDate.year}年${selectedDate.month.value}月${selectedDate.dayOfMonth}日 ${viewModel.getWesternZodiac(selectedDate)}"
+            text = "公历 ${selectedDate.year}年${selectedDate.month.value}月${selectedDate.dayOfMonth}日 ${
+                viewModel.getWesternZodiac(
+                    selectedDate
+                )
+            }"
         )
     }
     Row(
@@ -265,7 +271,10 @@ fun DateInfo() {
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(id = R.string.calendar_time_lucky, if (!luckyInfoState.value) ">>" else "<<"),
+            text = stringResource(
+                id = R.string.calendar_time_lucky,
+                if (!luckyInfoState.value) ">>" else "<<"
+            ),
             modifier = Modifier.clickable {
                 luckyInfoState.value = !luckyInfoState.value
             },
@@ -384,12 +393,18 @@ fun AlarmEdit(modifier: Modifier) {
     val timePickerState = rememberTimePickerState(initTime.hour, initTime.minute, true)
     val alarmTypeExpanded = remember { mutableStateOf(false) }
     val selectedDate by viewModel.getSelectedDate()
+    val selectedDateEffectCount = remember { mutableIntStateOf(0) }
     val showRemoveConfirm = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(selectedDate) {
-        alarmState.setType(alarmState.getType().value, selectedDate)
+        selectedDateEffectCount.intValue++
+        if (selectedDateEffectCount.intValue <= 1 && alarmState.getType().value == AlarmType.ALARM_ONE_TIME) {
+            viewModel.setSelectedDate(alarmState.getTriggerDay().value)
+        } else {
+            alarmState.setType(alarmState.getType().value, selectedDate)
+        }
     }
 
     BackHandler(enabled = viewModel.getAlarmEditState().value != CalendarViewModel.AlarmEditState.None) {
