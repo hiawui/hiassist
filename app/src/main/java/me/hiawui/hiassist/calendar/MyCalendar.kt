@@ -98,7 +98,6 @@ import me.hiawui.hiassist.calendar.alarm.getDisplayTime
 import me.hiawui.hiassist.calendar.alarm.getNextAlarmTime
 import me.hiawui.hiassist.calendar.alarm.rememberAlarmInfoState
 import me.hiawui.hiassist.calendar.lunar.LunarTools
-import me.hiawui.hiassist.logI
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -138,18 +137,6 @@ fun MyCalendar() {
     val yearEditState = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    var isResumed by remember { mutableStateOf(false) }
-    DisposableEffect(lifecycle) {
-        val observer = LifecycleEventObserver { _, event ->
-            isResumed = (event == Lifecycle.Event.ON_RESUME)
-        }
-        lifecycle.addObserver(observer)
-        onDispose {
-            lifecycle.removeObserver(observer)
-        }
-    }
-
     Surface {
         Column(
             modifier = Modifier
@@ -177,7 +164,7 @@ fun MyCalendar() {
             Spacer(Modifier.height(20.dp))
             FloatingWindowSettings()
             if (editState == CalendarViewModel.AlarmEditState.None) {
-                AlarmList(Modifier, isResumed)
+                AlarmList(Modifier)
             } else {
                 AlarmEdit(Modifier)
             }
@@ -566,7 +553,7 @@ fun AlarmEdit(modifier: Modifier) {
 }
 
 @Composable
-fun AlarmList(modifier: Modifier, isResumed: Boolean) {
+fun AlarmList(modifier: Modifier) {
     val viewModel = viewModel<CalendarViewModel>()
     val alarmListState =
         viewModel.getAlarms()
@@ -591,7 +578,7 @@ fun AlarmList(modifier: Modifier, isResumed: Boolean) {
         )
     }
     for (alarm in alarmListState.value.alarmsList) {
-        AlarmView(modifier = Modifier, alarm = alarm, isResumed)
+        AlarmView(modifier = Modifier, alarm = alarm)
     }
 }
 
@@ -633,7 +620,7 @@ fun AlarmViewPreview() {
                 Text(text = "${list.size}")
             }
             for (alarm in list) {
-                AlarmView(modifier = Modifier, alarm = alarm, false)
+                AlarmView(modifier = Modifier, alarm = alarm)
             }
         }
     }
@@ -657,15 +644,11 @@ fun Context.getDisplayDateText(alarm: AlarmInfo): String {
 }
 
 @Composable
-fun AlarmView(modifier: Modifier, alarm: AlarmInfo, isResumed: Boolean) {
+fun AlarmView(modifier: Modifier, alarm: AlarmInfo) {
     val viewModel = viewModel<CalendarViewModel>()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val enabled = remember { mutableStateOf(true) }
-
-    LaunchedEffect(isResumed) {
-        enabled.value = (!alarm.disabled) && (alarm.getNextAlarmTime(context) != null)
-    }
+    val enabled = (!alarm.disabled) && (alarm.getNextAlarmTime(context) != null)
 
     Row(
         modifier = modifier
@@ -712,7 +695,7 @@ fun AlarmView(modifier: Modifier, alarm: AlarmInfo, isResumed: Boolean) {
             )
         }
         Column {
-            Switch(checked = enabled.value, onCheckedChange = { newChecked ->
+            Switch(checked = enabled, onCheckedChange = { newChecked ->
                 if (newChecked && alarm.getNextAlarmTime(context) == null) {
                     return@Switch
                 }
