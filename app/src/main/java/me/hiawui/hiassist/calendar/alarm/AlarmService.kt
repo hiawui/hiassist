@@ -187,7 +187,7 @@ class AlarmService : Service() {
     }
 
     private fun playRing() {
-        val step = 0.4f
+        val step = 0.3f
         var volume = 0.2f
         var lastTime = System.currentTimeMillis()
         mediaPlayer.setVolume(volume, volume)
@@ -200,7 +200,7 @@ class AlarmService : Service() {
                     break
                 }
                 val now = System.currentTimeMillis()
-                if (now - lastTime < 8000) {
+                if (now - lastTime < 10000) {
                     continue
                 }
                 lastTime = now
