@@ -1,6 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Hiassist</string>
 
+    <string name="nav_calendar">日历</string>
+    <string name="nav_settings">设置</string>
+
+    <string name="settings_fetch_holiday">更新节假日</string>
+    <string name="info_holiday_fetched">节假日已更新</string>
+
     <string name="calendar_year">年</string>
     <string name="calendar_today">今天</string>
     <string name="calendar_cancel">取消</string>
