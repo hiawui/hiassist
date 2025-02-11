@@ -9,6 +9,7 @@
 
     <string name="calendar_year">年</string>
     <string name="calendar_today">今天</string>
+    <string name="calendar_tomorrow">明天</string>
     <string name="calendar_cancel">取消</string>
     <string name="calendar_invalid_year">年份超出范围 [%d ~ %d]</string>
     <string name="calendar_time_lucky">时辰凶吉 %s</string>

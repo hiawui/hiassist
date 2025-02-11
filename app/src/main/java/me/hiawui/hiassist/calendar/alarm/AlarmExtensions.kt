@@ -138,6 +138,8 @@ fun AlarmInfo.getDisplayDate(context: Context): String {
     val date = LocalDate.ofEpochDay(this.triggerDay)
     if (now == date) {
         return context.getString(R.string.calendar_today)
+    } else if (now.plusDays(1) == date) {
+        return context.getString(R.string.calendar_tomorrow)
     }
     val str = StringBuilder()
     if (date.year != now.year) {

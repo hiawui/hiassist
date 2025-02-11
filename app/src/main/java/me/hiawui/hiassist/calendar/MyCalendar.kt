@@ -88,6 +88,7 @@ import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.nextMonth
 import com.kizitonwose.calendar.core.previousMonth
 import com.kizitonwose.calendar.core.yearMonth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.hiawui.hiassist.R
 import me.hiawui.hiassist.calendar.alarm.AlarmInfoBuilder
@@ -98,7 +99,9 @@ import me.hiawui.hiassist.calendar.alarm.getDisplayTime
 import me.hiawui.hiassist.calendar.alarm.getNextAlarmTime
 import me.hiawui.hiassist.calendar.alarm.rememberAlarmInfoState
 import me.hiawui.hiassist.calendar.lunar.LunarTools
+import me.hiawui.hiassist.logI
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -648,14 +651,51 @@ fun AlarmView(modifier: Modifier, alarm: AlarmInfo) {
     val viewModel = viewModel<CalendarViewModel>()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val enabled = (!alarm.disabled) && (alarm.getNextAlarmTime(context) != null)
+    var nextAlarmTime by remember { mutableStateOf<LocalDateTime?>(null) }
+    var enabled by remember { mutableStateOf(true) }
+    var nextAlarmDuration by remember { mutableStateOf(Duration.ofSeconds(Long.MAX_VALUE)) }
+
+    LaunchedEffect(alarm) {
+        while (true) {
+            nextAlarmTime = alarm.getNextAlarmTime(context)
+            enabled = (!alarm.disabled) && (nextAlarmTime != null)
+            nextAlarmDuration = if (enabled) {
+                Duration.between(LocalDateTime.now(), nextAlarmTime)
+            } else {
+                Duration.ofSeconds(Long.MAX_VALUE)
+            }
+            val delayTime = if (nextAlarmDuration.toHours() > 12) {
+                Duration.ofHours(1).toMillis()
+            } else if (nextAlarmDuration.toMinutes() > 60) {
+                Duration.ofMinutes(1).toMillis()
+            } else {
+                Duration.ofSeconds(1).toMillis()
+            }
+            delay(delayTime)
+        }
+    }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(start = 20.dp, end = 20.dp, top = 10.dp)
     ) {
-        Text(text = alarm.title, fontSize = 14.sp)
+        Text(text = alarm.title, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        if (nextAlarmDuration.toHours() < 12) {
+            val msg = if (nextAlarmDuration.toHours() > 0) {
+                "${nextAlarmDuration.toHours()}小时后"
+            } else if (nextAlarmDuration.toMinutes() > 0) {
+                "${nextAlarmDuration.toMinutes()}分钟后"
+            } else {
+                "${nextAlarmDuration.seconds}秒后"
+            }
+            Text(
+                text = msg,
+                color = MaterialTheme.colorScheme.secondary,
+                fontSize = 14.sp,
+                textAlign = TextAlign.End
+            )
+        }
     }
     Row(
         modifier = modifier
@@ -801,6 +841,16 @@ fun CalendarHeader(
     val viewModel = viewModel<CalendarViewModel>()
     val coroutineScope = rememberCoroutineScope()
     val selectedDate by viewModel.getSelectedDate()
+    var currDate by remember { mutableStateOf(LocalDate.now()) }
+    var currMonth by remember { mutableStateOf(YearMonth.now()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            currDate = LocalDate.now()
+            currMonth = YearMonth.now()
+            delay(Duration.ofMinutes(1).toMillis())
+        }
+    }
 
     Row(
         modifier = modifier,
@@ -838,14 +888,14 @@ fun CalendarHeader(
             modifier = Modifier
                 .weight(0.4f)
                 .clickable {
-                    onYearMonthClick(state.firstVisibleMonth(0.6f)?.yearMonth ?: YearMonth.now())
+                    onYearMonthClick(state.firstVisibleMonth(0.6f)?.yearMonth ?: currMonth)
                 },
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center,
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
         )
-        if (selectedDate != LocalDate.now() || state.firstVisibleMonth(0.6f)?.yearMonth != YearMonth.now()) {
+        if (selectedDate != currDate || state.firstVisibleMonth(0.6f)?.yearMonth != currMonth) {
             Text(
                 text = stringResource(id = R.string.calendar_today),
                 modifier = Modifier
@@ -853,7 +903,7 @@ fun CalendarHeader(
                     .padding(end = 10.dp)
                     .clickable {
                         coroutineScope.launch {
-                            state.scrollToMonth(YearMonth.now())
+                            state.scrollToMonth(currMonth)
                             viewModel.setSelectedDate(LocalDate.now())
                         }
                     },
