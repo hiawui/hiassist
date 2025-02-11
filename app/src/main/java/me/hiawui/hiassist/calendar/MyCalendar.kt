@@ -99,7 +99,6 @@ import me.hiawui.hiassist.calendar.alarm.getDisplayTime
 import me.hiawui.hiassist.calendar.alarm.getNextAlarmTime
 import me.hiawui.hiassist.calendar.alarm.rememberAlarmInfoState
 import me.hiawui.hiassist.calendar.lunar.LunarTools
-import me.hiawui.hiassist.logI
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDate
