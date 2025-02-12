@@ -51,6 +51,7 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -139,6 +140,21 @@ fun MyCalendar() {
     val yearEditState = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    var realDateTime by remember { mutableStateOf(LocalDateTime.now()) }
+    val realEpochDay by remember(realDateTime) {
+        derivedStateOf {
+            realDateTime.toLocalDate().toEpochDay()
+        }
+    }
+    val realHour by remember(realDateTime) { derivedStateOf { LocalDateTime.now().hour } }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(Duration.ofSeconds(1).toMillis())
+            realDateTime = LocalDateTime.now()
+        }
+    }
+
     Surface {
         Column(
             modifier = Modifier
@@ -155,18 +171,18 @@ fun MyCalendar() {
                     }
                 })
             } else {
-                CalendarHeader(Modifier, state, onYearMonthClick = {
+                CalendarHeader(Modifier, state, realEpochDay, onYearMonthClick = {
                     yearEditState.value = true
                 })
             }
             Spacer(Modifier.height(20.dp))
-            BodyView(Modifier, state)
+            BodyView(Modifier, state, realEpochDay)
             Spacer(Modifier.height(20.dp))
-            DateInfo()
+            DateInfo(realEpochDay, realHour)
             Spacer(Modifier.height(20.dp))
             FloatingWindowSettings()
             if (editState == CalendarViewModel.AlarmEditState.None) {
-                AlarmList(Modifier)
+                AlarmList(Modifier, realDateTime)
             } else {
                 AlarmEdit(Modifier)
             }
@@ -180,22 +196,23 @@ fun MyCalendar() {
 fun DateInfoPreview() {
     Surface {
         Column(modifier = Modifier.fillMaxSize()) {
-            DateInfo()
+            DateInfo(LocalDate.now().toEpochDay(), LocalDateTime.now().hour)
         }
     }
 }
 
 @Composable
-fun DateInfo() {
+fun DateInfo(realEpochDay: Long, realHour: Int) {
     val viewModel = viewModel<CalendarViewModel>()
     val selectedDate by viewModel.getSelectedDate()
     val luckyInfoState = remember { mutableStateOf(false) }
-
     val lunarInfo = LunarTools.getLunarDateInfo(selectedDate)
     val eightChars = viewModel.getSelectedDate8Chars()
     val luckyInfo = viewModel.getSelectedDateTimeLuckyList()
     val holidayInfo by viewModel.getHolidayInfo(selectedDate)
         .collectAsStateWithLifecycle(initialValue = null)
+    val realDate = LocalDate.ofEpochDay(realEpochDay)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -290,7 +307,7 @@ fun DateInfo() {
                         val idx = i * 7 + j
                         if (idx < luckyInfo.size) {
                             val rowBgColor =
-                                if (selectedDate == LocalDate.now() && LocalDateTime.now().hour in (idx * 2 - 1)..(idx * 2)) {
+                                if (selectedDate == realDate && realHour in (idx * 2 - 1)..(idx * 2)) {
                                     MaterialTheme.colorScheme.secondaryContainer
                                 } else {
                                     MaterialTheme.colorScheme.surface
@@ -555,7 +572,7 @@ fun AlarmEdit(modifier: Modifier) {
 }
 
 @Composable
-fun AlarmList(modifier: Modifier) {
+fun AlarmList(modifier: Modifier, realDateTime: LocalDateTime) {
     val viewModel = viewModel<CalendarViewModel>()
     val alarmListState =
         viewModel.getAlarms()
@@ -580,7 +597,7 @@ fun AlarmList(modifier: Modifier) {
         )
     }
     for (alarm in alarmListState.value.alarmsList) {
-        AlarmView(modifier = Modifier, alarm = alarm)
+        AlarmView(modifier = Modifier, alarm = alarm, realDateTime = realDateTime)
     }
 }
 
@@ -622,7 +639,11 @@ fun AlarmViewPreview() {
                 Text(text = "${list.size}")
             }
             for (alarm in list) {
-                AlarmView(modifier = Modifier, alarm = alarm)
+                AlarmView(
+                    modifier = Modifier,
+                    alarm = alarm,
+                    realDateTime = LocalDateTime.now()
+                )
             }
         }
     }
@@ -646,32 +667,16 @@ fun Context.getDisplayDateText(alarm: AlarmInfo): String {
 }
 
 @Composable
-fun AlarmView(modifier: Modifier, alarm: AlarmInfo) {
+fun AlarmView(modifier: Modifier, alarm: AlarmInfo, realDateTime: LocalDateTime) {
     val viewModel = viewModel<CalendarViewModel>()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var nextAlarmTime by remember { mutableStateOf<LocalDateTime?>(null) }
-    var enabled by remember { mutableStateOf(true) }
-    var nextAlarmDuration by remember { mutableStateOf(Duration.ofSeconds(Long.MAX_VALUE)) }
-
-    LaunchedEffect(alarm) {
-        while (true) {
-            nextAlarmTime = alarm.getNextAlarmTime(context)
-            enabled = (!alarm.disabled) && (nextAlarmTime != null)
-            nextAlarmDuration = if (enabled) {
-                Duration.between(LocalDateTime.now(), nextAlarmTime)
-            } else {
-                Duration.ofSeconds(Long.MAX_VALUE)
-            }
-            val delayTime = if (nextAlarmDuration.toHours() > 12) {
-                Duration.ofHours(1).toMillis()
-            } else if (nextAlarmDuration.toMinutes() > 60) {
-                Duration.ofMinutes(1).toMillis()
-            } else {
-                Duration.ofSeconds(1).toMillis()
-            }
-            delay(delayTime)
-        }
+    val nextAlarmTime = alarm.getNextAlarmTime(context)
+    val enabled = (!alarm.disabled) && (nextAlarmTime != null)
+    val nextAlarmDuration = if (enabled) {
+        Duration.between(realDateTime, nextAlarmTime)
+    } else {
+        Duration.ofSeconds(Long.MAX_VALUE)
     }
 
     Row(
@@ -747,7 +752,11 @@ fun AlarmView(modifier: Modifier, alarm: AlarmInfo) {
 }
 
 @Composable
-fun CalendarInputHeader(modifier: Modifier, state: CalendarState, onEditDone: (YearMonth) -> Unit) {
+fun CalendarInputHeader(
+    modifier: Modifier,
+    state: CalendarState,
+    onEditDone: (YearMonth) -> Unit
+) {
     val focusRequester = remember { FocusRequester() }
     val viewModel = viewModel<CalendarViewModel>()
     val selectedDate by viewModel.getSelectedDate()
@@ -765,7 +774,8 @@ fun CalendarInputHeader(modifier: Modifier, state: CalendarState, onEditDone: (Y
     ) {
         Spacer(modifier = Modifier.weight(.25f))
         val keyboardController = LocalSoftwareKeyboardController.current
-        val invalidYearMsg = stringResource(id = R.string.calendar_invalid_year, MIN_YEAR, MAX_YEAR)
+        val invalidYearMsg =
+            stringResource(id = R.string.calendar_invalid_year, MIN_YEAR, MAX_YEAR)
         OutlinedTextField(
             value = yearState.value,
             modifier = Modifier
@@ -835,21 +845,13 @@ fun CalendarInputHeader(modifier: Modifier, state: CalendarState, onEditDone: (Y
 fun CalendarHeader(
     modifier: Modifier,
     state: CalendarState,
+    realEpochDay: Long,
     onYearMonthClick: (YearMonth) -> Unit
 ) {
+    val realDate = LocalDate.ofEpochDay(realEpochDay)
     val viewModel = viewModel<CalendarViewModel>()
     val coroutineScope = rememberCoroutineScope()
     val selectedDate by viewModel.getSelectedDate()
-    var currDate by remember { mutableStateOf(LocalDate.now()) }
-    var currMonth by remember { mutableStateOf(YearMonth.now()) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            currDate = LocalDate.now()
-            currMonth = YearMonth.now()
-            delay(Duration.ofMinutes(1).toMillis())
-        }
-    }
 
     Row(
         modifier = modifier,
@@ -887,14 +889,16 @@ fun CalendarHeader(
             modifier = Modifier
                 .weight(0.4f)
                 .clickable {
-                    onYearMonthClick(state.firstVisibleMonth(0.6f)?.yearMonth ?: currMonth)
+                    onYearMonthClick(
+                        state.firstVisibleMonth(0.6f)?.yearMonth ?: realDate.yearMonth
+                    )
                 },
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center,
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
         )
-        if (selectedDate != currDate || state.firstVisibleMonth(0.6f)?.yearMonth != currMonth) {
+        if (selectedDate != realDate || state.firstVisibleMonth(0.6f)?.yearMonth != realDate.yearMonth) {
             Text(
                 text = stringResource(id = R.string.calendar_today),
                 modifier = Modifier
@@ -902,8 +906,8 @@ fun CalendarHeader(
                     .padding(end = 10.dp)
                     .clickable {
                         coroutineScope.launch {
-                            state.scrollToMonth(currMonth)
-                            viewModel.setSelectedDate(LocalDate.now())
+                            state.scrollToMonth(realDate.yearMonth)
+                            viewModel.setSelectedDate(realDate)
                         }
                     },
                 color = MaterialTheme.colorScheme.primary,
@@ -943,9 +947,9 @@ fun CalendarHeader(
 }
 
 @Composable
-fun BodyView(modifier: Modifier, state: CalendarState) {
+fun BodyView(modifier: Modifier, state: CalendarState, realEpochDay: Long) {
+    val realDate = LocalDate.ofEpochDay(realEpochDay)
     val viewModel = viewModel<CalendarViewModel>()
-
     HorizontalCalendar(
         modifier = modifier,
         state = state,
@@ -956,6 +960,7 @@ fun BodyView(modifier: Modifier, state: CalendarState) {
             val isMakeupDay = holidayInfo?.holiday == false
             DayView(
                 day,
+                realDate,
                 viewModel.isSelectedDate(day.date),
                 isHoliday,
                 isMakeupDay,
@@ -997,6 +1002,7 @@ fun DayViewPreview() {
         ) {
             DayView(
                 day = CalendarDay(LocalDate.now(), DayPosition.MonthDate),
+                LocalDate.now(),
                 true,
                 true,
                 false,
@@ -1011,6 +1017,7 @@ fun DayViewPreview() {
 @Composable
 fun DayView(
     day: CalendarDay,
+    realDate: LocalDate,
     isSelected: Boolean,
     isHoliday: Boolean,
     isMakeupDay: Boolean,
@@ -1030,7 +1037,7 @@ fun DayView(
             .background(bgColor)
             .border(
                 1.dp,
-                if (day.isToday()) MaterialTheme.colorScheme.primary
+                if (day.date == realDate) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.surface
             )
             .clickable { onClick(day) },
